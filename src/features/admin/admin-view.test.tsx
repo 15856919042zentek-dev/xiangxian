@@ -211,8 +211,9 @@ describe("AdminView navigation", () => {
 
     await user.click(screen.getByRole("button", { name: "流程催办" }))
 
-    expect(screen.getByRole("heading", { name: "流程催办工作台" })).toBeTruthy()
-    expect(screen.getByText("先处理逾期和高风险会诊单，再按状态批量催办。")).toBeTruthy()
+    expect(screen.queryByRole("heading", { name: "流程催办工作台" })).toBeNull()
+    expect(screen.queryByText("先处理逾期和高风险会诊单，再按状态批量催办。")).toBeNull()
+    expect(screen.queryByText("风险优先")).toBeNull()
 
     for (const metric of [
       "全部待催办",
@@ -223,6 +224,16 @@ describe("AdminView navigation", () => {
       "待医生确认",
     ]) {
       expect(screen.getByRole("button", { name: new RegExp(metric) })).toBeTruthy()
+    }
+    for (const helper of [
+      "医生和专家待处理",
+      "紧急或需关注",
+      "专家接诊前",
+      "资料退回后",
+      "会诊后建议",
+      "处置闭环前",
+    ]) {
+      expect(screen.queryByText(helper)).toBeNull()
     }
 
     const queue = screen.getByTestId("admin-reminder-queue")

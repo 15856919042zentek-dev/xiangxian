@@ -89,7 +89,6 @@ interface ReminderMetric {
   key: ReminderFilter
   label: string
   value: number
-  helper: string
   tone?: "default" | "warning" | "danger"
 }
 
@@ -1116,20 +1115,6 @@ function RemindersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="rounded-xl border border-border/80 bg-card p-5 shadow-sm shadow-primary/5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">流程催办工作台</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              先处理逾期和高风险会诊单，再按状态批量催办。
-            </p>
-          </div>
-          <Badge className="w-fit border-red-200 bg-red-50 text-red-700" variant="outline">
-            风险优先
-          </Badge>
-        </div>
-      </section>
-
       <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         {metrics.map((metric) => (
           <ReminderMetricCard
@@ -1230,7 +1215,6 @@ function ReminderMetricCard({
         <RiskDot risk={metric.tone === "danger" ? "urgent" : metric.tone === "warning" ? "warning" : "normal"} />
       </div>
       <div className="mt-3 text-2xl font-semibold tracking-tight">{metric.value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{metric.helper}</div>
     </button>
   )
 }
@@ -2586,40 +2570,34 @@ function getReminderMetrics(items: ReminderQueueItem[]): ReminderMetric[] {
       key: "all",
       label: "全部待催办",
       value: items.length,
-      helper: "医生和专家待处理",
     },
     {
       key: "risk",
       label: "逾期/风险",
       value: filterReminderQueueItems(items, "risk").length,
-      helper: "紧急或需关注",
       tone: "danger",
     },
     {
       key: "pending_expert",
       label: "待专家预审",
       value: items.filter((item) => item.filterKey === "pending_expert").length,
-      helper: "专家接诊前",
       tone: "warning",
     },
     {
       key: "needs_more_info",
       label: "待医生补资料",
       value: items.filter((item) => item.filterKey === "needs_more_info").length,
-      helper: "资料退回后",
       tone: "warning",
     },
     {
       key: "pending_advice",
       label: "待专家建议",
       value: items.filter((item) => item.filterKey === "pending_advice").length,
-      helper: "会诊后建议",
     },
     {
       key: "pending_doctor_confirm",
       label: "待医生确认",
       value: items.filter((item) => item.filterKey === "pending_doctor_confirm").length,
-      helper: "处置闭环前",
     },
   ]
 }
