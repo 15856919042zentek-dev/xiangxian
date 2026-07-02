@@ -556,7 +556,7 @@ Expected:
 - Oxlint exits with code 0.
 - Vite production build exits with code 0.
 
-- [ ] **Step 2: Commit implementation**
+- [x] **Step 2: Commit implementation**
 
 Run:
 
@@ -568,7 +568,7 @@ git commit -m "Improve admin reminder workbench"
 
 Expected: commit succeeds with only admin view and admin view test changes.
 
-- [ ] **Step 3: Push and let Vercel deploy**
+- [x] **Step 3: Push and let Vercel deploy**
 
 Run:
 
@@ -578,7 +578,7 @@ GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=20' git push
 
 Expected: `main` pushes to `git@github.com:15856919042zentek-dev/xiangxian.git`; Vercel starts a new production deployment.
 
-- [ ] **Step 4: Verify production route**
+- [x] **Step 4: Verify production route**
 
 Poll the deployed admin route:
 
@@ -595,7 +595,7 @@ exit 1
 
 Expected: exits 0 with `code=200`.
 
-- [ ] **Step 5: Browser spot check**
+- [x] **Step 5: Browser spot check**
 
 Open `https://xiangxian.vercel.app/admin`, enter “流程催办”, and verify:
 
