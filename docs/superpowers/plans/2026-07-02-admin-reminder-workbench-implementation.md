@@ -27,7 +27,7 @@
 **Files:**
 - Modify: `src/features/admin/admin-view.test.tsx`
 
-- [ ] **Step 1: Add the failing test block**
+- [x] **Step 1: Add the failing test block**
 
 Append these tests inside the existing `describe("AdminView navigation", () => { ... })` block, after the current admin status detail tests and before quality archive tests:
 
@@ -112,7 +112,7 @@ Append these tests inside the existing `describe("AdminView navigation", () => {
   })
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -127,7 +127,7 @@ Expected: FAIL because `流程催办工作台`, metric filter buttons, `admin-re
 **Files:**
 - Modify: `src/features/admin/admin-view.tsx`
 
-- [ ] **Step 1: Add reminder filter and derived item types**
+- [x] **Step 1: Add reminder filter and derived item types**
 
 Add these types near `AdminCounts`:
 
@@ -159,7 +159,7 @@ interface ReminderQueueItem {
 }
 ```
 
-- [ ] **Step 2: Add reminder helper functions**
+- [x] **Step 2: Add reminder helper functions**
 
 Add these helpers near `getAdminCounts`:
 
@@ -296,7 +296,7 @@ function getReminderMetrics(items: ReminderQueueItem[]): ReminderMetric[] {
 }
 ```
 
-- [ ] **Step 3: Run TypeScript check through tests**
+- [x] **Step 3: Run TypeScript check through tests**
 
 Run:
 
@@ -311,7 +311,7 @@ Expected: still FAIL because UI is not wired yet, but there should be no TypeScr
 **Files:**
 - Modify: `src/features/admin/admin-view.tsx`
 
-- [ ] **Step 1: Add filter state and derived data in `RemindersPage`**
+- [x] **Step 1: Add filter state and derived data in `RemindersPage`**
 
 Replace the top of `RemindersPage` with:
 
@@ -326,7 +326,7 @@ Replace the top of `RemindersPage` with:
 
 Remove the old `pendingRecords` constant.
 
-- [ ] **Step 2: Replace the returned JSX**
+- [x] **Step 2: Replace the returned JSX**
 
 Replace the current `return (...)` body of `RemindersPage` with:
 
@@ -412,7 +412,7 @@ Replace the current `return (...)` body of `RemindersPage` with:
   )
 ```
 
-- [ ] **Step 3: Add `ReminderMetricCard`**
+- [x] **Step 3: Add `ReminderMetricCard`**
 
 Add this component after `RemindersPage`:
 
@@ -447,7 +447,7 @@ function ReminderMetricCard({
 }
 ```
 
-- [ ] **Step 4: Add `ReminderQueueRow`**
+- [x] **Step 4: Add `ReminderQueueRow`**
 
 Add this component after `ReminderMetricCard`:
 
@@ -489,7 +489,7 @@ function ReminderQueueRow({
 }
 ```
 
-- [ ] **Step 5: Add `ReminderTemplateRow`**
+- [x] **Step 5: Add `ReminderTemplateRow`**
 
 Add this component after `ReminderQueueRow`:
 
@@ -524,7 +524,7 @@ function ReminderTemplateRow({
 }
 ```
 
-- [ ] **Step 6: Run focused GREEN**
+- [x] **Step 6: Run focused GREEN**
 
 Run:
 
@@ -540,7 +540,7 @@ Expected: PASS for the new reminder tests and existing admin tests.
 - Modify if checks fail: `src/features/admin/admin-view.tsx`
 - Modify if checks fail: `src/features/admin/admin-view.test.tsx`
 
-- [ ] **Step 1: Run full local checks**
+- [x] **Step 1: Run full local checks**
 
 Run:
 

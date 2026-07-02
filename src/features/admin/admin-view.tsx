@@ -77,6 +77,32 @@ interface AdminCounts {
   reminders: number
 }
 
+type ReminderFilter =
+  | "all"
+  | "risk"
+  | "pending_expert"
+  | "needs_more_info"
+  | "pending_advice"
+  | "pending_doctor_confirm"
+
+interface ReminderMetric {
+  key: ReminderFilter
+  label: string
+  value: number
+  helper: string
+  tone?: "default" | "warning" | "danger"
+}
+
+interface ReminderQueueItem {
+  record: AdminCaseRecord
+  targetRole: Exclude<UserRole, "admin">
+  primaryActionLabel: string
+  filterKey: ReminderFilter
+  lastReminderAt?: string
+  hasRecentReminder: boolean
+  priorityScore: number
+}
+
 type InviteStatus = "not_generated" | "generated" | "sent" | "activated"
 
 interface ExpertServiceRecord extends ExpertProfile {
@@ -488,10 +514,11 @@ export function AdminView({ session, dispatch }: AdminViewProps) {
   }
 
   function sendContextReminder(record: AdminCaseRecord) {
-    if (!record.currentOwnerRole) return
+    const targetRole = getReminderTargetRole(record)
+    if (!targetRole) return
 
     sendReminder(
-      record.currentOwnerRole,
+      targetRole,
       `${record.currentOwner}提醒：${adminStatusLabels[record.consultation.status]}`,
       `运营提醒：${record.consultation.patient.name}的会诊单${record.operationNeed}，请及时处理。`,
     )
@@ -1080,81 +1107,205 @@ function RemindersPage({
   ) => void
   onSendContextReminder: (record: AdminCaseRecord) => void
 }) {
-  const pendingRecords = records.filter((record) => record.currentOwnerRole)
+  const [activeFilter, setActiveFilter] = useState<ReminderFilter>("all")
   const reminderLogs = operationLogs.filter((log) => log.action === "reminder")
+  const queueItems = getReminderQueueItems(records, operationLogs)
+  const filteredQueueItems = filterReminderQueueItems(queueItems, activeFilter)
+  const metrics = getReminderMetrics(queueItems)
+  const activeMetric = metrics.find((metric) => metric.key === activeFilter) ?? metrics[0]
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
-      <Card>
-        <CardHeader>
-          <CardTitle>流程催办</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
-          {reminderTemplates.map((template) => (
-            <div key={template.id} className="rounded-xl border border-border/80 bg-card/80 p-4 shadow-sm shadow-primary/5">
-              <div className="flex items-start justify-between gap-3">
+    <div className="flex flex-col gap-4">
+      <section className="rounded-xl border border-border/80 bg-card p-5 shadow-sm shadow-primary/5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">流程催办工作台</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              先处理逾期和高风险会诊单，再按状态批量催办。
+            </p>
+          </div>
+          <Badge className="w-fit border-red-200 bg-red-50 text-red-700" variant="outline">
+            风险优先
+          </Badge>
+        </div>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        {metrics.map((metric) => (
+          <ReminderMetricCard
+            key={metric.key}
+            metric={metric}
+            active={activeFilter === metric.key}
+            onClick={() => setActiveFilter(metric.key)}
+          />
+        ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Card data-testid="admin-reminder-queue">
+            <CardHeader>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <div className="text-sm font-medium">{template.title}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    发送至 {audienceLabels[template.targetRole]}
+                  <CardTitle>待催办队列</CardTitle>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    当前筛选：{activeMetric.label}
                   </div>
                 </div>
-                <Badge variant="outline">
-                  {template.appliesTo.map((status) => adminStatusLabels[status]).join(" / ")}
-                </Badge>
+                <Badge variant="outline">{filteredQueueItems.length} 单</Badge>
               </div>
-              <Button
-                className="mt-3"
-                variant="outline"
-                onClick={() =>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {filteredQueueItems.length === 0 ? (
+                <EmptyState title="当前筛选下暂无待催办单" />
+              ) : (
+                filteredQueueItems.map((item) => (
+                  <ReminderQueueRow
+                    key={item.record.consultation.id}
+                    item={item}
+                    onSendReminder={() => onSendContextReminder(item.record)}
+                  />
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>近期催办历史</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {reminderLogs.length === 0 ? (
+                <EmptyState title="暂无催办历史" />
+              ) : (
+                reminderLogs.slice(-8).reverse().map((log) => (
+                  <OperationLogItem key={log.id} log={log} />
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>快捷模板</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {reminderTemplates.map((template) => (
+              <ReminderTemplateRow
+                key={template.id}
+                template={template}
+                onSendReminder={() =>
                   onSendReminder(template.targetRole, template.title, template.detail)
                 }
-              >
-                <SendIcon data-icon="inline-start" />
-                发送催办
-              </Button>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>待催办队列</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {pendingRecords.slice(0, 5).map((record) => (
-              <div key={record.consultation.id} className="rounded-xl border border-border/80 bg-card/80 p-3 shadow-sm shadow-primary/5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium">{record.consultation.patient.name}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {record.currentOwner} · {record.waitTime}
-                    </div>
-                  </div>
-                  <AdminStatusBadge status={record.consultation.status} />
-                </div>
-                <Button className="mt-3 w-full" size="sm" onClick={() => onSendContextReminder(record)}>
-                  <BellRingIcon data-icon="inline-start" />
-                  按当前节点催办
-                </Button>
-              </div>
+              />
             ))}
           </CardContent>
         </Card>
+      </section>
+    </div>
+  )
+}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>近期催办记录</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {reminderLogs.slice(-4).reverse().map((log) => (
-              <OperationLogItem key={log.id} log={log} />
-            ))}
-          </CardContent>
-        </Card>
+function ReminderMetricCard({
+  metric,
+  active,
+  onClick,
+}: {
+  metric: ReminderMetric
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "rounded-xl border border-border/80 bg-card p-4 text-left shadow-sm shadow-primary/5 transition hover:bg-secondary/45",
+        active && "border-primary/70 bg-primary/5 ring-2 ring-primary/15",
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">{metric.label}</span>
+        <RiskDot risk={metric.tone === "danger" ? "urgent" : metric.tone === "warning" ? "warning" : "normal"} />
       </div>
+      <div className="mt-3 text-2xl font-semibold tracking-tight">{metric.value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{metric.helper}</div>
+    </button>
+  )
+}
+
+function ReminderQueueRow({
+  item,
+  onSendReminder,
+}: {
+  item: ReminderQueueItem
+  onSendReminder: () => void
+}) {
+  const record = item.record
+
+  return (
+    <div className="rounded-xl border border-border/80 bg-card/80 p-4 shadow-sm shadow-primary/5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold">{record.consultation.patient.name}</span>
+            <AdminStatusBadge status={record.consultation.status} />
+            <RiskBadge risk={record.riskLevel} />
+            {item.hasRecentReminder && (
+              <Badge className="border-blue-200 bg-blue-50 text-blue-700" variant="outline">
+                已催办
+              </Badge>
+            )}
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            {record.consultation.id} · {record.consultation.department}
+          </div>
+        </div>
+        <Button className="w-full lg:w-auto" size="sm" onClick={onSendReminder}>
+          <BellRingIcon data-icon="inline-start" />
+          {item.primaryActionLabel}
+        </Button>
+      </div>
+
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
+        <InfoBox label="责任方" value={record.currentOwner} />
+        <InfoBox label="等待时间" value={record.waitTime} />
+        <InfoBox label="时效要求" value={record.slaLabel} />
+      </div>
+      {item.lastReminderAt && (
+        <div className="mt-3 text-xs text-muted-foreground">
+          最近催办：{item.lastReminderAt}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReminderTemplateRow({
+  template,
+  onSendReminder,
+}: {
+  template: (typeof reminderTemplates)[number]
+  onSendReminder: () => void
+}) {
+  return (
+    <div className="rounded-xl border border-border/80 bg-card/80 p-3 shadow-sm shadow-primary/5">
+      <div className="flex flex-wrap gap-2">
+        {template.appliesTo.map((status) => (
+          <Badge key={status} variant="outline">
+            {adminStatusLabels[status]}
+          </Badge>
+        ))}
+      </div>
+      <div className="mt-3 text-xs text-muted-foreground">
+        发送至 {audienceLabels[template.targetRole]}
+      </div>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{template.detail}</p>
+      <Button className="mt-3 w-full justify-start" variant="outline" onClick={onSendReminder}>
+        <SendIcon data-icon="inline-start" />
+        {template.title}
+      </Button>
     </div>
   )
 }
@@ -2340,6 +2491,137 @@ function getAdminCounts(records: AdminCaseRecord[], logs: OperationLog[]): Admin
     archived: records.filter((record) => record.consultation.status === "archived").length,
     reminders: logs.filter((log) => log.action === "reminder").length,
   }
+}
+
+function getReminderTargetRole(record: AdminCaseRecord): Exclude<UserRole, "admin"> | undefined {
+  if (record.consultation.status === "in_consultation") return "expert"
+  return record.currentOwnerRole
+}
+
+function getReminderPrimaryActionLabel(status: ConsultationStatus) {
+  const labels: Partial<Record<ConsultationStatus, string>> = {
+    draft: "催医生提交",
+    pending_expert: "催专家预审",
+    needs_more_info: "催医生补资料",
+    scheduled: "提醒医生/专家",
+    in_consultation: "提醒双方",
+    pending_advice: "催专家提交建议",
+    pending_doctor_confirm: "催医生确认处置",
+  }
+
+  return labels[status] ?? "节点催办"
+}
+
+function getReminderFilterKey(status: ConsultationStatus): ReminderFilter {
+  if (status === "pending_expert") return "pending_expert"
+  if (status === "needs_more_info") return "needs_more_info"
+  if (status === "pending_advice" || status === "in_consultation") return "pending_advice"
+  if (status === "pending_doctor_confirm") return "pending_doctor_confirm"
+  return "all"
+}
+
+function getLastReminderAt(record: AdminCaseRecord, reminderLogs: OperationLog[]) {
+  return reminderLogs
+    .filter((log) => log.consultationId === record.consultation.id)
+    .at(-1)?.createdAt
+}
+
+function getReminderPriorityScore(record: AdminCaseRecord, hasRecentReminder: boolean) {
+  let score = 0
+
+  if (record.riskLevel === "urgent") score += 100
+  if (record.riskLevel === "warning") score += 70
+  if (record.consultation.priority === "urgent") score += 30
+  if (record.consultation.status === "needs_more_info") score += 28
+  if (record.consultation.status === "scheduled") score += 24
+  if (record.consultation.status === "pending_advice") score += 12
+  if (record.currentOwnerRole === "expert") score += 8
+  if (hasRecentReminder) score -= 18
+
+  return score
+}
+
+function getReminderQueueItems(records: AdminCaseRecord[], operationLogs: OperationLog[]) {
+  const reminderLogs = operationLogs.filter((log) => log.action === "reminder")
+
+  return records
+    .map((record): ReminderQueueItem | null => {
+      const targetRole = getReminderTargetRole(record)
+      if (!targetRole) return null
+
+      const lastReminderAt = getLastReminderAt(record, reminderLogs)
+      const hasRecentReminder = Boolean(lastReminderAt)
+
+      return {
+        record,
+        targetRole,
+        primaryActionLabel: getReminderPrimaryActionLabel(record.consultation.status),
+        filterKey: getReminderFilterKey(record.consultation.status),
+        lastReminderAt,
+        hasRecentReminder,
+        priorityScore: getReminderPriorityScore(record, hasRecentReminder),
+      }
+    })
+    .filter((item): item is ReminderQueueItem => Boolean(item))
+    .sort((a, b) => b.priorityScore - a.priorityScore)
+}
+
+function filterReminderQueueItems(items: ReminderQueueItem[], activeFilter: ReminderFilter) {
+  if (activeFilter === "all") return items
+  if (activeFilter === "risk") {
+    return items.filter(
+      (item) =>
+        item.record.riskLevel === "urgent" ||
+        item.record.riskLevel === "warning" ||
+        item.record.consultation.priority === "urgent",
+    )
+  }
+
+  return items.filter((item) => item.filterKey === activeFilter)
+}
+
+function getReminderMetrics(items: ReminderQueueItem[]): ReminderMetric[] {
+  return [
+    {
+      key: "all",
+      label: "全部待催办",
+      value: items.length,
+      helper: "医生和专家待处理",
+    },
+    {
+      key: "risk",
+      label: "逾期/风险",
+      value: filterReminderQueueItems(items, "risk").length,
+      helper: "紧急或需关注",
+      tone: "danger",
+    },
+    {
+      key: "pending_expert",
+      label: "待专家预审",
+      value: items.filter((item) => item.filterKey === "pending_expert").length,
+      helper: "专家接诊前",
+      tone: "warning",
+    },
+    {
+      key: "needs_more_info",
+      label: "待医生补资料",
+      value: items.filter((item) => item.filterKey === "needs_more_info").length,
+      helper: "资料退回后",
+      tone: "warning",
+    },
+    {
+      key: "pending_advice",
+      label: "待专家建议",
+      value: items.filter((item) => item.filterKey === "pending_advice").length,
+      helper: "会诊后建议",
+    },
+    {
+      key: "pending_doctor_confirm",
+      label: "待医生确认",
+      value: items.filter((item) => item.filterKey === "pending_doctor_confirm").length,
+      helper: "处置闭环前",
+    },
+  ]
 }
 
 function getExpertStatusLabel(status: ExpertProfile["status"]) {

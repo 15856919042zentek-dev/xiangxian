@@ -204,6 +204,85 @@ describe("AdminView navigation", () => {
     expect(screen.getByRole("button", { name: "关闭线上会诊" })).toBeTruthy()
   })
 
+  it("shows a risk-first reminder workbench with status filters and history", async () => {
+    const user = userEvent.setup()
+
+    render(<AdminView session={createDemoSession()} dispatch={vi.fn()} />)
+
+    await user.click(screen.getByRole("button", { name: "流程催办" }))
+
+    expect(screen.getByRole("heading", { name: "流程催办工作台" })).toBeTruthy()
+    expect(screen.getByText("先处理逾期和高风险会诊单，再按状态批量催办。")).toBeTruthy()
+
+    for (const metric of [
+      "全部待催办",
+      "逾期/风险",
+      "待专家预审",
+      "待医生补资料",
+      "待专家建议",
+      "待医生确认",
+    ]) {
+      expect(screen.getByRole("button", { name: new RegExp(metric) })).toBeTruthy()
+    }
+
+    const queue = screen.getByTestId("admin-reminder-queue")
+    expect(within(queue).getByText("待催办队列")).toBeTruthy()
+    expect(within(queue).getByText("刘某某")).toBeTruthy()
+    expect(within(queue).getByText("周某某")).toBeTruthy()
+    expect(within(queue).getByText("陈某某")).toBeTruthy()
+
+    const queueText = queue.textContent ?? ""
+    expect(queueText.indexOf("刘某某")).toBeLessThan(queueText.indexOf("周某某"))
+    expect(queueText.indexOf("周某某")).toBeLessThan(queueText.indexOf("陈某某"))
+
+    expect(within(queue).getByRole("button", { name: "催专家预审" })).toBeTruthy()
+    expect(within(queue).getByRole("button", { name: "催医生补资料" })).toBeTruthy()
+    expect(within(queue).getByRole("button", { name: "催专家提交建议" })).toBeTruthy()
+    expect(within(queue).getAllByText("已催办").length).toBeGreaterThan(0)
+
+    expect(screen.getByText("快捷模板")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "请尽快预审会诊资料" })).toBeTruthy()
+    expect(screen.getByText("近期催办历史")).toBeTruthy()
+    expect(screen.getByText("已提醒补充资料")).toBeTruthy()
+    expect(screen.getByText("已提醒提交建议")).toBeTruthy()
+  })
+
+  it("filters the reminder queue when a status metric is selected", async () => {
+    const user = userEvent.setup()
+
+    render(<AdminView session={createDemoSession()} dispatch={vi.fn()} />)
+
+    await user.click(screen.getByRole("button", { name: "流程催办" }))
+    await user.click(screen.getByRole("button", { name: /待医生补资料/ }))
+
+    const queue = screen.getByTestId("admin-reminder-queue")
+    expect(within(queue).getByText("周某某")).toBeTruthy()
+    expect(within(queue).queryByText("刘某某")).toBeNull()
+    expect(within(queue).queryByText("陈某某")).toBeNull()
+    expect(within(queue).getByText("当前筛选：待医生补资料")).toBeTruthy()
+  })
+
+  it("dispatches the current-node reminder from the reminder queue", async () => {
+    const user = userEvent.setup()
+    const dispatch = vi.fn()
+
+    render(<AdminView session={createDemoSession()} dispatch={dispatch} />)
+
+    await user.click(screen.getByRole("button", { name: "流程催办" }))
+
+    const queue = screen.getByTestId("admin-reminder-queue")
+    await user.click(within(queue).getByRole("button", { name: "催专家预审" }))
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "admin.sendReminder",
+      input: {
+        targetRole: "expert",
+        title: "专家处理提醒：待专家预审",
+        detail: expect.stringContaining("刘某某"),
+      },
+    })
+  })
+
   it("shows a quality archive center with queue, checks, and archive package", async () => {
     const user = userEvent.setup()
 
