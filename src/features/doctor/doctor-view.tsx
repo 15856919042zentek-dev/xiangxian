@@ -669,8 +669,8 @@ export function DoctorView({ session, dispatch }: DoctorViewProps) {
   }
 
   return (
-    <div className="doctor-console grid min-h-[calc(100svh-9rem)] gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="doctor-sidebar rounded-xl border bg-card p-3 shadow-sm lg:sticky lg:top-28 lg:h-[calc(100svh-8rem)] lg:overflow-y-auto">
+    <div className="doctor-console grid min-h-[calc(100vh-9rem)] min-h-[calc(100svh-9rem)] gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="doctor-sidebar rounded-xl border bg-card p-3 shadow-sm lg:sticky lg:top-28 lg:h-[calc(100vh-8rem)] lg:h-[calc(100svh-8rem)] lg:overflow-y-auto">
         <nav className="flex flex-col gap-1">
           {doctorSections.map((section) => (
             <DoctorSidebarItem

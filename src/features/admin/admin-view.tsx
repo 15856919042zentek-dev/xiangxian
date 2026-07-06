@@ -586,8 +586,8 @@ export function AdminView({ session, dispatch }: AdminViewProps) {
   }
 
   return (
-    <div className="grid min-h-[calc(100svh-8.5rem)] gap-4 lg:grid-cols-[264px_minmax(0,1fr)]">
-      <aside className="rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-[0_18px_40px_-32px_rgba(30,64,175,0.55)] lg:sticky lg:top-24 lg:h-[calc(100svh-7rem)] lg:overflow-y-auto">
+    <div className="admin-console-layout grid min-h-[calc(100vh-8.5rem)] min-h-[calc(100svh-8.5rem)] gap-4 lg:grid-cols-[264px_minmax(0,1fr)]">
+      <aside className="admin-console-sidebar rounded-2xl border border-border/80 bg-card/95 p-2.5 shadow-[0_18px_40px_-32px_rgba(30,64,175,0.55)] lg:sticky lg:top-24 lg:h-[calc(100vh-7rem)] lg:h-[calc(100svh-7rem)] lg:overflow-y-auto">
         <nav className="flex flex-col gap-1.5">
           {adminSections.map((section) => (
             <SidebarItem
@@ -600,7 +600,7 @@ export function AdminView({ session, dispatch }: AdminViewProps) {
         </nav>
       </aside>
 
-      <main className="min-w-0">
+      <main className="admin-console-main min-w-0">
         {activeSection === "workbench" && (
           <WorkbenchPage
             records={records}
@@ -722,14 +722,14 @@ function WorkbenchPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="grid gap-3 md:grid-cols-4">
+      <section className="admin-workbench-metrics grid gap-3 md:grid-cols-4">
         <MetricCard title="流转中" value={counts.active} icon={ActivityIcon} />
         <MetricCard title="紧急/风险" value={counts.urgent} icon={HeartPulseIcon} tone="danger" />
         <MetricCard title="待运营" value={counts.waitingAdmin} icon={ClipboardCheckIcon} tone="warning" />
         <MetricCard title="今日催办" value={counts.reminders} icon={BellRingIcon} />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className="admin-workbench-content grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
             <CardTitle>今日待办队列</CardTitle>
@@ -1115,7 +1115,7 @@ function RemindersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <section className="admin-reminder-metrics grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         {metrics.map((metric) => (
           <ReminderMetricCard
             key={metric.key}
@@ -1126,7 +1126,7 @@ function RemindersPage({
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="admin-reminder-content grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex min-w-0 flex-col gap-4">
           <Card data-testid="admin-reminder-queue">
             <CardHeader>
@@ -1205,7 +1205,7 @@ function ReminderMetricCard({
     <button
       type="button"
       className={cn(
-        "rounded-xl border border-border/80 bg-card p-4 text-left shadow-sm shadow-primary/5 transition hover:bg-secondary/45",
+        "min-w-0 rounded-xl border border-border/80 bg-card p-4 text-left shadow-sm shadow-primary/5 transition hover:bg-secondary/45",
         active && "border-primary/70 bg-primary/5 ring-2 ring-primary/15",
       )}
       onClick={onClick}
@@ -1229,8 +1229,8 @@ function ReminderQueueRow({
   const record = item.record
 
   return (
-    <div className="rounded-xl border border-border/80 bg-card/80 p-4 shadow-sm shadow-primary/5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    <div className="admin-queue-row min-w-0 rounded-xl border border-border/80 bg-card/80 p-4 shadow-sm shadow-primary/5">
+      <div className="admin-queue-row-header flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold">{record.consultation.patient.name}</span>
@@ -1246,7 +1246,7 @@ function ReminderQueueRow({
             {record.consultation.id} · {record.consultation.department}
           </div>
         </div>
-        <Button className="w-full lg:w-auto" size="sm" onClick={onSendReminder}>
+        <Button className="w-full shrink-0 lg:w-auto lg:min-w-24" size="sm" onClick={onSendReminder}>
           <BellRingIcon data-icon="inline-start" />
           {item.primaryActionLabel}
         </Button>
@@ -2171,7 +2171,7 @@ function CaseQueueRow({
   onSendReminder: () => void
 }) {
   return (
-    <div className="grid gap-3 rounded-xl border border-border/80 bg-card/80 p-3 shadow-sm shadow-primary/5 lg:grid-cols-[1fr_auto] lg:items-center">
+    <div className="admin-case-queue-row grid gap-3 rounded-xl border border-border/80 bg-card/80 p-3 shadow-sm shadow-primary/5 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{record.consultation.patient.name}</span>
@@ -2185,7 +2185,7 @@ function CaseQueueRow({
           {record.operationNeed} · {record.waitTime}
         </p>
       </div>
-      <div className="flex flex-wrap gap-2 lg:justify-end">
+      <div className="admin-case-queue-actions flex flex-wrap gap-2 lg:justify-end">
         <Button size="sm" variant="outline" onClick={onOpen}>
           查看
           <ChevronRightIcon data-icon="inline-end" />

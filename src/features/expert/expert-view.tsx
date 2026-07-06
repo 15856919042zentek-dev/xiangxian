@@ -243,7 +243,7 @@ export function ExpertView({
   return (
     <div className="mx-auto max-w-[430px] text-[15px]">
       <div className="rounded-[2rem] border border-border/80 bg-card p-2 shadow-2xl shadow-primary/10 ring-1 ring-primary/10">
-        <div className="flex h-[860px] max-h-[calc(100svh-2rem)] flex-col overflow-hidden rounded-[1.5rem] bg-background">
+        <div className="flex h-[860px] max-h-[calc(100vh-2rem)] max-h-[calc(100svh-2rem)] flex-col overflow-hidden rounded-[1.5rem] bg-background">
           <PhoneStatusBar />
           {!isAuthenticated ? (
             <ExpertLoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />

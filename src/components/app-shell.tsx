@@ -26,7 +26,7 @@ const navItems = [
 export function AppShell({ route, session, dispatch, children }: AppShellProps) {
   if (route === "expert") {
     return (
-      <div className="expert-app-theme min-h-svh bg-background px-3 py-4">
+      <div className="expert-app-theme min-h-screen min-h-svh bg-background px-3 py-4">
         {children}
       </div>
     )
@@ -42,11 +42,11 @@ export function AppShell({ route, session, dispatch, children }: AppShellProps) 
   const subtitle = isConsoleRoute ? "" : "本地医生发起、乡贤专家协同、运营全程监管"
 
   return (
-    <div className={isConsoleRoute ? "admin-app-theme min-h-svh bg-background" : "min-h-svh bg-background"}>
-      <header className={isConsoleRoute ? "sticky top-0 z-20 border-b border-border/80 bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/78" : "sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"}>
+    <div className={isConsoleRoute ? "admin-app-theme min-h-screen min-h-svh bg-background" : "min-h-screen min-h-svh bg-background"}>
+      <header className={isConsoleRoute ? "console-header sticky top-0 z-20 border-b border-border/80 bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/78" : "sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"}>
         <div className={isConsoleRoute ? "mx-auto flex max-w-[1500px] flex-col gap-3 px-4 py-3 lg:px-6" : "mx-auto flex max-w-[1500px] flex-col gap-3 px-4 py-4 lg:px-6"}>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-3">
+          <div className={isConsoleRoute ? "console-header-row flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between" : "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"}>
+            <div className={isConsoleRoute ? "console-brand flex items-center gap-3" : "flex items-center gap-3"}>
               <div className={isConsoleRoute ? "flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/20" : "flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground"}>
                 <StethoscopeIcon className="size-5" />
               </div>
@@ -103,7 +103,7 @@ function ConsoleUserProfile() {
     <div
       aria-label="当前登录用户"
       role="group"
-      className="flex w-full items-center gap-3 rounded-xl border border-border/80 bg-card/80 px-3 py-2 shadow-sm lg:w-auto lg:min-w-72 lg:justify-end"
+      className="console-user-profile flex w-full items-center gap-3 rounded-xl border border-border/80 bg-card/80 px-3 py-2 shadow-sm lg:w-auto lg:min-w-72 lg:justify-end"
     >
       <Avatar size="lg" className="ring-2 ring-primary/10">
         <AvatarFallback className="bg-primary/10 font-semibold text-primary">王</AvatarFallback>

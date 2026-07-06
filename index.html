@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -8,6 +8,9 @@
   </head>
   <body>
     <div id="root"></div>
+    <script nomodule>
+      document.body.innerHTML = '<div style="max-width:720px;margin:48px auto;padding:24px 28px;border:1px solid #c8d8e8;border-radius:12px;background:#f8fcff;color:#17233d;font-family:Arial,Microsoft YaHei,sans-serif;line-height:1.8;"><h1 style="margin:0 0 12px;font-size:22px;">当前浏览器内核过旧</h1><p style="margin:0;">本系统需要使用 Edge、Firefox、Chrome、Safari，或 360 安全浏览器的极速模式访问。IE 与 360 兼容模式不支持完整的远程问诊工作台功能。</p></div>';
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
